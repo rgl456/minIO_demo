@@ -1,6 +1,6 @@
 services:
   minio-demo:
-    image: minio/minio:RELEASE.2024-05-01T01-14-16Z
+    image: minio/minio:latest
     container_name: minio-demo
     ports:
       - "9000:9000"
