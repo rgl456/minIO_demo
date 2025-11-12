@@ -5,14 +5,10 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import io.minio.errors.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 @Service
@@ -47,27 +43,32 @@ public class FileService {
         }
     }
 
-    public String uploadFile(MultipartFile file){
-        String bucketName = minioProperties.getBucketName();
-        String fileName = file.getOriginalFilename();
-        String randomUUID = UUID.randomUUID().toString();
+    public String uploadFile(MultipartFile file) throws Exception {
+        try{
+            String bucketName = minioProperties.getBucketName();
+            String fileName = file.getOriginalFilename();
+            String randomUUID = UUID.randomUUID().toString();
 
-        String extension = "";
-        if(fileName != null && fileName.lastIndexOf('.')!=-1){
-            extension = fileName.substring(fileName.lastIndexOf('.'));
+            String extension = "";
+            if (fileName != null && fileName.lastIndexOf('.') != -1) {
+                extension = fileName.substring(fileName.lastIndexOf('.'));
+            }
+
+            String newFileName = randomUUID + extension;
+
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(newFileName)
+                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
+                            .build()
+            );
+
+            return newFileName;
         }
-
-        String newFileName = randomUUID + extension;
-
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket(bucketName)
-                        .object(newFileName)
-                        .stream(file.getInputStream(), file.getSize(), -1)
-                        .contentType(file.getContentType())
-                        .build()
-        );
-
-        return newFileName;
+        catch (Exception e) {
+            throw new RuntimeException("Error uploading file to MinIO: " + e.getMessage(), e);
+        }
     }
 }
