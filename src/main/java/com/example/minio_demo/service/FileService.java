@@ -1,14 +1,13 @@
 package com.example.minio_demo.service;
 
 import com.example.minio_demo.model.MinioProperties;
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
+import io.minio.*;
+import io.minio.errors.MinioException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.UUID;
 
 @Service
@@ -23,7 +22,7 @@ public class FileService {
     }
 
     @PostConstruct
-    private void init() throws Exception {
+    private void init() throws Exception{
         try{
             String bucketName = minioProperties.getBucketName();
             boolean bucketExists = minioClient.bucketExists(
@@ -43,7 +42,7 @@ public class FileService {
         }
     }
 
-    public String uploadFile(MultipartFile file) throws Exception {
+    public String uploadFile(MultipartFile file){
         try{
             String bucketName = minioProperties.getBucketName();
             String fileName = file.getOriginalFilename();
@@ -71,4 +70,19 @@ public class FileService {
             throw new RuntimeException("Error uploading file to MinIO: " + e.getMessage(), e);
         }
     }
+
+    public InputStream download(String fileName){
+        try{
+            return minioClient.getObject(
+                    GetObjectArgs.builder().bucket(minioProperties.getBucketName()).object(fileName).build()
+            );
+        }
+        catch (MinioException e){
+            throw new RuntimeException("Error downloading file from MinIO: " + e.getMessage(), e);
+        }
+        catch (Exception e){
+            throw new RuntimeException("An unexpected error occurred: " + e.getMessage(), e);
+        }
+    }
+
 }

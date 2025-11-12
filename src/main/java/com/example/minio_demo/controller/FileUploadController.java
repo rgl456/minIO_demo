@@ -1,14 +1,17 @@
 package com.example.minio_demo.controller;
 
 import com.example.minio_demo.service.FileService;
+import io.minio.GetObjectResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.ErrorResponseException;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.InputStream;
 import java.util.Map;
 
 @RestController
@@ -32,6 +35,25 @@ public class FileUploadController {
         }
         catch (Exception e) {
             return new ResponseEntity<>(ResponseEntity.internalServerError(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/download/{fileName}")
+    public ResponseEntity<byte[]> downloadFile(@PathVariable String fileName){
+        try {
+            InputStream fileInputStream = fileService.download(fileName);
+            byte[] content = fileInputStream.readAllBytes();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(content);
+        }
+        catch (ErrorResponseException e) {
+            System.err.println("File not found: " + e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            System.err.println("Error streaming file: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(null);
         }
     }
 
