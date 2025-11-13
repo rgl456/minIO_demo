@@ -1,0 +1,5 @@
+com\example\minio_demo\MinioDemoApplication.class
+com\example\minio_demo\model\MinioProperties.class
+com\example\minio_demo\service\FileService.class
+com\example\minio_demo\config\MinioConfig.class
+com\example\minio_demo\controller\FileUploadController.class
